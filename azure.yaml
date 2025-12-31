@@ -30,17 +30,27 @@ services:
             Write-Host "=== Building Next.js app ==="
             npm run build
             
-            Write-Host "=== Getting Function App URL ==="
-            $functionApp = az functionapp list --query "[?tags.\`"azd-service-name\`"=='api'].{name:name, defaultHostName:defaultHostName}" -o json | ConvertFrom-Json
-            if ($functionApp) {
-              $apiUrl = "https://$($functionApp.defaultHostName)/api"
-              Write-Host "API URL: $apiUrl"
-              "window.__API_URL__ = '$apiUrl';" | Set-Content -Path "out/config.js" -Encoding UTF8 -NoNewline
-              Write-Host "Created out/config.js with API URL"
-            } else {
-              Write-Host "WARNING: Function app not found, using placeholder"
-              "window.__API_URL__ = 'https://func-placeholder.azurewebsites.net/api';" | Set-Content -Path "out/config.js" -Encoding UTF8 -NoNewline
+            Write-Host "=== Copying startup.js to out/ ==="
+            Copy-Item -Path "startup.js" -Destination "out/startup.js" -Force
+            Write-Host "Copied startup.js"
+            
+            Write-Host "=== Creating config.js ==="
+            # Check if FUNCTIONS_URI exists (from bicep outputs after provision)
+            try {
+              $functionsUri = azd env get-value FUNCTIONS_URI 2>$null
+              if ($functionsUri -and $functionsUri -notlike "*ERROR*") {
+                $apiUrl = "$functionsUri/api"
+                Write-Host "Using Function URL from environment: $apiUrl"
+                "window.__API_URL__ = '$apiUrl';" | Set-Content -Path "public/config.js" -Encoding UTF8 -NoNewline
+              } else {
+                Write-Host "FUNCTIONS_URI not found, using placeholder"
+                "window.__API_URL__ = '/api';" | Set-Content -Path "public/config.js" -Encoding UTF8 -NoNewline
+              }
+            } catch {
+              Write-Host "FUNCTIONS_URI not available yet, using placeholder"
+              "window.__API_URL__ = '/api';" | Set-Content -Path "public/config.js" -Encoding UTF8 -NoNewline
             }
+            Write-Host "Created public/config.js"
             
             Write-Host "=== Creating package.json for serve ==="
             @'
@@ -57,6 +67,8 @@ services:
             }
             '@ | Set-Content -Path "out/package.json" -Encoding UTF8
             Write-Host "Created out/package.json"
+            
+            exit 0
         posix:
           shell: sh
           run: |
@@ -70,17 +82,23 @@ services:
             echo "=== Building Next.js app ==="
             npm run build
             
-            echo "=== Getting Function App URL ==="
-            export API_HOST=$(az functionapp list --query "[?tags.\"azd-service-name\"=='api'].defaultHostName" -o tsv)
-            if [ -n "$API_HOST" ]; then
-              export NEXT_PUBLIC_API_URL="https://$API_HOST/api"
-              echo "API URL: $NEXT_PUBLIC_API_URL"
-              echo "window.__API_URL__ = '$NEXT_PUBLIC_API_URL';" > out/config.js
-              cat out/config.js
+            echo "=== Copying startup.js to out/ ==="
+            cp startup.js out/startup.js
+            echo "Copied startup.js"
+            
+            echo "=== Creating config.js ==="
+            # Check if FUNCTIONS_URI exists (from bicep outputs after provision)
+            functionsUri=$(azd env get-value FUNCTIONS_URI 2>/dev/null || echo "")
+            if [ -n "$functionsUri" ] && ! echo "$functionsUri" | grep -q "ERROR"; then
+              apiUrl="$functionsUri/api"
+              echo "Using Function URL from environment: $apiUrl"
+              echo "window.__API_URL__ = '$apiUrl';" > public/config.js
             else
-              echo "WARNING: Function app not found"
-              echo "window.__API_URL__ = 'https://func-placeholder.azurewebsites.net/api';" > out/config.js
+              echo "FUNCTIONS_URI not found, using placeholder"
+              echo "window.__API_URL__ = '/api';" > public/config.js
             fi
+            echo "Created public/config.js"
+            cat public/config.js
             
             echo "=== Creating package.json for serve ==="
             cat > out/package.json << 'EOF'
@@ -97,4 +115,6 @@ services:
             }
             EOF
             echo "Created out/package.json"
+            
+            exit 0
 
