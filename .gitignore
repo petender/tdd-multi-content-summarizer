@@ -41,6 +41,10 @@ out/
 .DS_Store
 *.pem
 
+# Generated config (created by azd prepackage hook)
+web/public/config.js
+web/out/config.js
+
 # Local
 local.settings.json
 .vscode/
