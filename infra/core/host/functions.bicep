@@ -3,9 +3,7 @@ param location string = resourceGroup().location
 param tags object = {}
 
 param storageAccountName string
-param storageAccountResourceGroup string = resourceGroup().name
 param applicationInsightsName string
-param applicationInsightsResourceGroup string = resourceGroup().name
 param appSettings object = {}
 param runtimeName string = 'python'
 param runtimeVersion string = '3.11'
@@ -19,12 +17,10 @@ var customAppSettings = [for key in objectKeys(appSettings): {
 
 resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' existing = {
   name: storageAccountName
-  scope: resourceGroup(storageAccountResourceGroup)
 }
 
 resource appInsights 'Microsoft.Insights/components@2020-02-02' existing = {
   name: applicationInsightsName
-  scope: resourceGroup(applicationInsightsResourceGroup)
 }
 
 resource plan 'Microsoft.Web/serverfarms@2022-03-01' = {

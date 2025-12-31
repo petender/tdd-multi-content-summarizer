@@ -46,13 +46,6 @@ resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   tags: tags
 }
 
-// Separate resource group for Functions (Linux) to avoid conflicts with App Service (Linux)
-resource rgFunctions 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: '${abbrs.resourcesResourceGroups}${environmentName}-func'
-  location: location
-  tags: tags
-}
-
 // Monitor application with Azure Monitor
 module monitoring './core/monitor/monitoring.bicep' = {
   name: 'monitoring'
@@ -139,18 +132,16 @@ module web './core/host/appservice.bicep' = {
   }
 }
 
-// Azure Functions for backend processing (in separate RG for Linux)
+// Azure Functions for backend processing
 module functions './core/host/functions.bicep' = {
   name: 'functions'
-  scope: rgFunctions
+  scope: rg
   params: {
     name: '${abbrs.webSitesFunctions}${resourceToken}v2'
     location: location
     tags: tags
     storageAccountName: storage.outputs.name
-    storageAccountResourceGroup: rg.name
     applicationInsightsName: monitoring.outputs.applicationInsightsName
-    applicationInsightsResourceGroup: rg.name
     appSettings: {
       AZURE_OPENAI_ENDPOINT: openAi.outputs.endpoint
       AZURE_OPENAI_DEPLOYMENT_NAME: openAiDeploymentName
@@ -166,9 +157,6 @@ module functions './core/host/functions.bicep' = {
       'http://localhost:3000'
     ]
   }
-  dependsOn: [
-    web
-  ]
 }
 
 // Role assignments for Function App managed identity
