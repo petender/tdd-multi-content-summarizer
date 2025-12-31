@@ -8,7 +8,7 @@ A versatile, multi-language content summarization application powered by Azure O
 1. **📄 Web Articles** - Summarize blog posts, news articles, and web pages by URL
 2. **📝 Direct Text** - Paste any text content for instant analysis  
 3. **📋 PDF Documents** - Upload and extract insights from PDF files
-4. **🎥 YouTube Videos** - Get summaries from video transcripts (local use)
+4. **🎥 YouTube Videos** - Get summaries from video transcripts (local use only, since YouTube blocks public cloud provider IPs in meantime)
 
 ### 🌐 Multi-Language Support
 Generate summaries in:
@@ -36,12 +36,12 @@ Each summary includes:
 - **Azure OpenAI** - GPT-4 for intelligent summarization and translation
 - **Azure Functions** - Serverless API endpoints (Python)
 - **Azure Cosmos DB** - Document storage for summaries
-- **Azure Static Web Apps** - Next.js frontend hosting
+- **Azure App Service** - Next.js frontend hosting
 
 ### Tech Stack
 - **Backend**: Python 3.11, Azure Functions, FastAPI
 - **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
-- **AI**: Azure OpenAI GPT-4, BeautifulSoup, PyPDF2, newspaper3k
+- **AI**: Azure OpenAI GPT-4, BeautifulSoup
 - **Database**: Azure Cosmos DB (NoSQL)
 
 ## 🚀 Deployment
@@ -68,9 +68,14 @@ azd auth login
 3. **Deploy to Azure:**
 ```bash
 azd up
+
+# ⚠️ Important: For first-time deployment, also run:
+azd deploy web
 ```
 
-This single command will:
+**Why the second command?** On the first deployment to a new environment, the web app's configuration needs to be updated with the correct Function App URL. This second command ensures everything is properly connected. Subsequent deployments only need `azd up`.
+
+The `azd up` command will:
 - Provision all Azure resources (OpenAI, Cosmos DB, Functions, Static Web App)
 - Deploy the Function App (API)
 - Deploy the Static Web App (UI)
@@ -256,6 +261,24 @@ az monitor app-insights query \
 ```
 
 ## 🐛 Troubleshooting
+
+### First deployment - Web app can't connect to API
+If your web app shows connection errors on first deployment:
+```bash
+azd deploy web
+```
+This updates the configuration with the correct Function App URL. See [DEPLOYMENT_TESTING.md](./DEPLOYMENT_TESTING.md) for details.
+
+### Function App shows 404 errors
+Verify the functions are deployed:
+```bash
+# Check which function app is configured
+azd env get-value FUNCTIONS_APP_NAME
+
+# Manually deploy functions if needed
+cd api
+func azure functionapp publish $(azd env get-value FUNCTIONS_APP_NAME) --python
+```
 
 ### YouTube videos not working in Azure
 YouTube blocks cloud provider IPs. Solutions:
