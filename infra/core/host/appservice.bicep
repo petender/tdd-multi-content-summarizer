@@ -35,7 +35,7 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
           value: '~24'
         }
         {
-          name: 'NEXT_PUBLIC_API_URL'
+          name: 'API_URL'
           value: apiUrl
         }
         {

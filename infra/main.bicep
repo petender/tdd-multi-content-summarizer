@@ -46,6 +46,13 @@ resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   tags: tags
 }
 
+// Separate resource group for Functions (Linux) to avoid conflicts with App Service (Linux)
+resource rgFunctions 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+  name: '${abbrs.resourcesResourceGroups}${environmentName}-func'
+  location: location
+  tags: tags
+}
+
 // Monitor application with Azure Monitor
 module monitoring './core/monitor/monitoring.bicep' = {
   name: 'monitoring'
@@ -120,16 +127,30 @@ module openAi './core/ai/cognitiveservices.bicep' = {
   }
 }
 
-// Azure Functions for backend processing
-module functions './core/host/functions.bicep' = {
-  name: 'functions'
+// Static Web App for frontend (deploy first to get URL for CORS)
+module web './core/host/appservice.bicep' = {
+  name: 'web'
   scope: rg
   params: {
-    name: '${abbrs.webSitesFunctions}${resourceToken}'
+    name: '${abbrs.webSitesAppService}${resourceToken}'
+    location: location
+    tags: tags
+    apiUrl: 'https://${abbrs.webSitesFunctions}${resourceToken}v2.azurewebsites.net/api'
+  }
+}
+
+// Azure Functions for backend processing (in separate RG for Linux)
+module functions './core/host/functions.bicep' = {
+  name: 'functions'
+  scope: rgFunctions
+  params: {
+    name: '${abbrs.webSitesFunctions}${resourceToken}v2'
     location: location
     tags: tags
     storageAccountName: storage.outputs.name
+    storageAccountResourceGroup: rg.name
     applicationInsightsName: monitoring.outputs.applicationInsightsName
+    applicationInsightsResourceGroup: rg.name
     appSettings: {
       AZURE_OPENAI_ENDPOINT: openAi.outputs.endpoint
       AZURE_OPENAI_DEPLOYMENT_NAME: openAiDeploymentName
@@ -140,19 +161,14 @@ module functions './core/host/functions.bicep' = {
     }
     runtimeName: 'python'
     runtimeVersion: '3.11'
+    corsAllowedOrigins: [
+      web.outputs.uri
+      'http://localhost:3000'
+    ]
   }
-}
-
-// Static Web App for frontend
-module web './core/host/appservice.bicep' = {
-  name: 'web'
-  scope: rg
-  params: {
-    name: '${abbrs.webSitesAppService}${resourceToken}'
-    location: location
-    tags: tags
-    apiUrl: '${functions.outputs.uri}/api'
-  }
+  dependsOn: [
+    web
+  ]
 }
 
 // Role assignments for Function App managed identity
