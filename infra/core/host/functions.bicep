@@ -7,6 +7,7 @@ param applicationInsightsName string
 param appSettings object = {}
 param runtimeName string = 'python'
 param runtimeVersion string = '3.11'
+param corsAllowedOrigins array = ['*']
 
 // Convert appSettings object to array format
 var customAppSettings = [for key in objectKeys(appSettings): {
@@ -71,8 +72,10 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
         }
       ], customAppSettings)
       cors: {
-        allowedOrigins: ['*']
+        allowedOrigins: corsAllowedOrigins
+        supportCredentials: false
       }
+      ftpsState: 'Disabled'
     }
     httpsOnly: true
   }
