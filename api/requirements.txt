@@ -1,0 +1,10 @@
+azure-functions
+azure-functions-durable
+openai
+youtube-transcript-api
+beautifulsoup4
+PyPDF2
+requests
+azure-cosmos
+python-dotenv
+azure-identity

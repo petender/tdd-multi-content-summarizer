@@ -1,0 +1,61 @@
+# Azure Developer CLI
+.azure/
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+.venv/
+env/
+ENV/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.next/
+out/
+.DS_Store
+*.pem
+
+# Local
+local.settings.json
+.vscode/
+.idea/
+*.log
+
+# Azure Functions
+bin/
+obj/
+
+# Test files
+test_*.py
+*_test.py
+
+# Logs and temporary files
+app-logs/
+deployment-logs/
+*.zip

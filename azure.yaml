@@ -1,0 +1,100 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: tdd-multi-content-summarizer
+metadata:
+  template: tdd-multi-content-summarizer@v1.0.0
+
+services:
+  api:
+    project: ./api
+    language: py
+    host: function
+  
+  web:
+    project: ./web
+    language: js
+    host: appservice
+    dist: out
+    hooks:
+      prepackage:
+        windows:
+          shell: pwsh
+          run: |
+            Write-Host "=== Installing dependencies ==="
+            if (-not (Test-Path "node_modules")) {
+              npm ci
+            } else {
+              Write-Host "node_modules already exists, skipping npm ci"
+            }
+            
+            Write-Host "=== Building Next.js app ==="
+            npm run build
+            
+            Write-Host "=== Getting Function App URL ==="
+            $functionApp = az functionapp list --query "[?tags.\`"azd-service-name\`"=='api'].{name:name, defaultHostName:defaultHostName}" -o json | ConvertFrom-Json
+            if ($functionApp) {
+              $apiUrl = "https://$($functionApp.defaultHostName)/api"
+              Write-Host "API URL: $apiUrl"
+              "window.__API_URL__ = '$apiUrl';" | Set-Content -Path "out/config.js" -Encoding UTF8 -NoNewline
+              Write-Host "Created out/config.js with API URL"
+            } else {
+              Write-Host "WARNING: Function app not found, using placeholder"
+              "window.__API_URL__ = 'https://func-placeholder.azurewebsites.net/api';" | Set-Content -Path "out/config.js" -Encoding UTF8 -NoNewline
+            }
+            
+            Write-Host "=== Creating package.json for serve ==="
+            @'
+            {
+              "name": "video-summarizer-static",
+              "version": "1.0.0",
+              "private": true,
+              "dependencies": {
+                "serve": "^14.2.1"
+              },
+              "scripts": {
+                "start": "serve . -s -p 8080"
+              }
+            }
+            '@ | Set-Content -Path "out/package.json" -Encoding UTF8
+            Write-Host "Created out/package.json"
+        posix:
+          shell: sh
+          run: |
+            echo "=== Installing dependencies ==="
+            if [ ! -d "node_modules" ]; then
+              npm ci
+            else
+              echo "node_modules already exists, skipping npm ci"
+            fi
+            
+            echo "=== Building Next.js app ==="
+            npm run build
+            
+            echo "=== Getting Function App URL ==="
+            export API_HOST=$(az functionapp list --query "[?tags.\"azd-service-name\"=='api'].defaultHostName" -o tsv)
+            if [ -n "$API_HOST" ]; then
+              export NEXT_PUBLIC_API_URL="https://$API_HOST/api"
+              echo "API URL: $NEXT_PUBLIC_API_URL"
+              echo "window.__API_URL__ = '$NEXT_PUBLIC_API_URL';" > out/config.js
+              cat out/config.js
+            else
+              echo "WARNING: Function app not found"
+              echo "window.__API_URL__ = 'https://func-placeholder.azurewebsites.net/api';" > out/config.js
+            fi
+            
+            echo "=== Creating package.json for serve ==="
+            cat > out/package.json << 'EOF'
+            {
+              "name": "video-summarizer-static",
+              "version": "1.0.0",
+              "private": true,
+              "dependencies": {
+                "serve": "^14.2.1"
+              },
+              "scripts": {
+                "start": "serve . -s -p 8080"
+              }
+            }
+            EOF
+            echo "Created out/package.json"
+

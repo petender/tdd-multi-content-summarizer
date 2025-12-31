@@ -1,0 +1,2 @@
+web: build
+serve -s out -p 8080
