@@ -140,6 +140,7 @@ module functions './core/host/functions.bicep' = {
     name: '${abbrs.webSitesFunctions}${resourceToken}v2'
     location: location
     tags: tags
+    planId: web.outputs.planId
     storageAccountName: storage.outputs.name
     applicationInsightsName: monitoring.outputs.applicationInsightsName
     appSettings: {

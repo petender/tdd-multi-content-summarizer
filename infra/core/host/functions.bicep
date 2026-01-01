@@ -2,6 +2,7 @@ param name string
 param location string = resourceGroup().location
 param tags object = {}
 
+param planId string = ''
 param storageAccountName string
 param applicationInsightsName string
 param appSettings object = {}
@@ -23,7 +24,8 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' existing = {
   name: applicationInsightsName
 }
 
-resource plan 'Microsoft.Web/serverfarms@2022-03-01' = {
+// Create consumption plan only if no planId provided
+resource plan 'Microsoft.Web/serverfarms@2022-03-01' = if (empty(planId)) {
   name: '${name}-plan'
   location: location
   tags: tags
@@ -42,7 +44,7 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
   tags: union(tags, { 'azd-service-name': 'api' })
   kind: 'functionapp,linux'
   properties: {
-    serverFarmId: plan.id
+    serverFarmId: empty(planId) ? plan.id : planId
     siteConfig: {
       linuxFxVersion: '${toUpper(runtimeName)}|${runtimeVersion}'
       appSettings: union([
