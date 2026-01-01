@@ -15,7 +15,7 @@ export default function HistoryPanel({ userId }: HistoryPanelProps) {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const apiUrl = (typeof window !== 'undefined' && (window as any).__API_URL__) || process.env.NEXT_PUBLIC_API_URL || '/api'
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7071/api'
         const response = await fetch(`${apiUrl}/history/${userId}`)
         
         if (!response.ok) {

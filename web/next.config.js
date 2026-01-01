@@ -1,11 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
-  distDir: 'out',
+  // SSR mode - no static export
   images: {
     unoptimized: true,
   },
-  trailingSlash: true,
 }
 
 module.exports = nextConfig

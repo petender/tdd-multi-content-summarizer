@@ -1,4 +1,0 @@
-// This file is auto-generated during deployment by the azd prepackage hook
-// Do not edit manually - see azure.yaml web service prepackage hook
-// For local development, this will use a placeholder that falls back to hardcoded URLs in components
-window.__API_URL__ = '/api';

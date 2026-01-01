@@ -14,96 +14,26 @@ services:
     project: ./web
     language: js
     host: appservice
-    dist: out
     hooks:
       prepackage:
         windows:
           shell: pwsh
           run: |
             Write-Host "=== Installing dependencies ==="
-            if (-not (Test-Path "node_modules")) {
-              npm ci
-            } else {
-              Write-Host "node_modules already exists, skipping npm ci"
-            }
+            npm ci
             
             Write-Host "=== Building Next.js app ==="
             npm run build
-            
-            Write-Host "=== Creating package.json for serve ==="
-            @'
-            {
-              "name": "video-summarizer-static",
-              "version": "1.0.0",
-              "private": true,
-              "dependencies": {
-                "serve": "^14.2.1"
-              },
-              "scripts": {
-                "start": "serve . -s -p 8080"
-              }
-            }
-            '@ | Set-Content -Path "out/package.json" -Encoding UTF8
-            Write-Host "Created out/package.json"
             
             exit 0
         posix:
           shell: sh
           run: |
             echo "=== Installing dependencies ==="
-            if [ ! -d "node_modules" ]; then
-              npm ci
-            else
-              echo "node_modules already exists, skipping npm ci"
-            fi
+            npm ci
             
             echo "=== Building Next.js app ==="
             npm run build
             
-            echo "=== Creating package.json for serve ==="
-            cat > out/package.json << 'EOF'
-            {
-              "name": "video-summarizer-static",
-              "version": "1.0.0",
-              "private": true,
-              "dependencies": {
-                "serve": "^14.2.1"
-              },
-              "scripts": {
-                "start": "serve . -s -p 8080"
-              }
-            }
-            EOF
-            echo "Created out/package.json"
-            
-            exit 0
-      predeploy:
-        windows:
-          shell: pwsh
-          run: |
-            Write-Host "=== Updating config.js with Function URL ==="
-            $functionsUri = azd env get-value FUNCTIONS_URI
-            if ($functionsUri -and $functionsUri -notlike "*ERROR*") {
-              $apiUrl = "$functionsUri/api"
-              Write-Host "Using Function URL: $apiUrl"
-              "window.__API_URL__ = '$apiUrl';" | Set-Content -Path "out/config.js" -Encoding UTF8 -NoNewline
-            } else {
-              Write-Host "ERROR: FUNCTIONS_URI not available"
-              exit 1
-            }
-            exit 0
-        posix:
-          shell: sh
-          run: |
-            echo "=== Updating config.js with Function URL ==="
-            functionsUri=$(azd env get-value FUNCTIONS_URI)
-            if [ -n "$functionsUri" ] && ! echo "$functionsUri" | grep -q "ERROR"; then
-              apiUrl="$functionsUri/api"
-              echo "Using Function URL: $apiUrl"
-              echo "window.__API_URL__ = '$apiUrl';" > out/config.js
-            else
-              echo "ERROR: FUNCTIONS_URI not available"
-              exit 1
-            fi
             exit 0
 

@@ -28,23 +28,19 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
     serverFarmId: plan.id
     siteConfig: {
       linuxFxVersion: 'NODE|24-lts'
-      appCommandLine: 'npx serve@latest . -s -p 8080'
+      appCommandLine: 'npm start'
       appSettings: [
         {
           name: 'WEBSITE_NODE_DEFAULT_VERSION'
           value: '~24'
         }
         {
-          name: 'API_URL'
+          name: 'NEXT_PUBLIC_API_URL'
           value: apiUrl
         }
         {
           name: 'PORT'
-          value: '8080'
-        }
-        {
-          name: 'WEBSITES_PORT'
-          value: '8080'
+          value: '3000'
         }
         {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'

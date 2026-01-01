@@ -1,1 +1,0 @@
-window.__API_URL__ = 'https://func-a2n5ii3imktse.azurewebsites.net/api';

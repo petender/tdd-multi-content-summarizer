@@ -12,9 +12,7 @@ export default function YouTubePage() {
   const [summary, setSummary] = useState<any>(null);
   const [error, setError] = useState('');
 
-  const API_BASE = typeof window !== 'undefined' && (window as any).__API_URL__ 
-    ? (window as any).__API_URL__ 
-    : process.env.NEXT_PUBLIC_API_URL || 'https://func-a2n5ii3imktse.azurewebsites.net/api';
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7071/api';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
